@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: audio-baby-relay
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 10000
