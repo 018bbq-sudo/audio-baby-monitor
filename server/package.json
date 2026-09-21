@@ -2,6 +2,7 @@
   "name": "audio-baby-monitor-relay",
   "version": "0.1.0",
   "private": true,
+  "dependencies": { "@noble/ciphers": "2.4.0" },
   "type": "module",
   "scripts": {
     "start": "node server.mjs"

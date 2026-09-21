@@ -1,8 +1,10 @@
 import http from 'node:http';
 import crypto from 'node:crypto';
+import { sosHandler } from './sos.mjs';
 
 const port = Number(process.env.PORT || 8080);
 const rooms = new Map();
+const handleSos = sosHandler();
 
 function roomFor(id) {
   if (!rooms.has(id)) rooms.set(id, { baby: null, parents: new Set() });
@@ -101,6 +103,7 @@ function processFrames(client, incoming) {
 }
 
 const server = http.createServer((request, response) => {
+  if (request.url === '/sos' || request.url?.startsWith('/sos/')) return handleSos(request, response);
   if (request.url === '/health') {
     response.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
     return response.end(JSON.stringify({ ok: true, rooms: rooms.size }));
@@ -112,6 +115,10 @@ const server = http.createServer((request, response) => {
 server.on('upgrade', (request, socket) => {
   try {
     const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
+    if (url.pathname === '/sos' || url.pathname.startsWith('/sos/')) {
+      socket.end('HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n');
+      return;
+    }
     const role = url.searchParams.get('role');
     const roomId = url.searchParams.get('room');
     const key = request.headers['sec-websocket-key'];
@@ -156,5 +163,5 @@ setInterval(() => {
 }, 30_000).unref();
 
 server.listen(port, '0.0.0.0', () => {
-  console.log(`Audio relay listening on port ${port}`);
+  console.log(`Audio relay listening on port ${server.address().port}`);
 });
